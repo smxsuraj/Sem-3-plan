@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sem 3 Study Planner · ECE KIET 2026-27</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Syne:wght@400;600;700;800&family=Inter:wght@400;500&display=swap');
+
+  :root {
+    --bg: #0e0f11;
+    --bg2: #151618;
+    --bg3: #1c1d20;
+    --bg4: #242528;
+    --border: rgba(255,255,255,0.08);
+    --border2: rgba(255,255,255,0.14);
+    --text: #e8e9eb;
+    --text2: #9a9ba0;
+    --text3: #5e5f65;
+    --green: #22c55e;
+    --green-dim: rgba(34,197,94,0.12);
+    --amber: #f59e0b;
+    --amber-dim: rgba(245,158,11,0.12);
+    --blue: #3b82f6;
+    --blue-dim: rgba(59,130,246,0.12);
+    --red: #ef4444;
+    --red-dim: rgba(239,68,68,0.12);
+    --purple: #a855f7;
+    --purple-dim: rgba(168,85,247,0.12);
+    --teal: #14b8a6;
+    --teal-dim: rgba(20,184,166,0.12);
+
+    /* exam colors */
+    --ca1-c: #3b82f6; --ca1-bg: rgba(59,130,246,0.1);
+    --mse1-c: #a855f7; --mse1-bg: rgba(168,85,247,0.1);
+    --ca2-c: #f59e0b; --mse2-bg: rgba(245,158,11,0.1);
+    --mse2-c: #f59e0b; --ca2-bg: rgba(245,158,11,0.1);
+    --ese-c: #ef4444; --ese-bg: rgba(239,68,68,0.1);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; font-size: 14px; line-height: 1.6; }
+
+  /* HEADER */
+  .header { background: var(--bg2); border-bottom: 1px solid var(--border); padding: 0 24px; position: sticky; top: 0; z-index: 100; display: flex; align-items: center; gap: 16px; height: 56px; }
+  .header-logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 17px; letter-spacing: -0.02em; color: var(--text); }
+  .header-logo span { color: var(--green); }
+  .header-meta { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--text3); }
+  .header-right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+  .global-progress { display: flex; align-items: center; gap: 8px; }
+  .global-progress-bar { width: 120px; height: 6px; background: var(--bg4); border-radius: 99px; overflow: hidden; }
+  .global-progress-fill { height: 100%; background: var(--green); border-radius: 99px; transition: width 0.4s; }
+  .global-pct { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--green); min-width: 36px; }
+  .reset-btn { font-size: 11px; color: var(--text3); background: none; border: 1px solid var(--border); padding: 4px 10px; border-radius: 6px; cursor: pointer; font-family: 'IBM Plex Mono', monospace; transition: all 0.15s; }
+  .reset-btn:hover { color: var(--red); border-color: var(--red); }
+
+  /* EXAM TIMELINE */
+  .timeline { display: flex; align-items: stretch; gap: 0; padding: 16px 24px; background: var(--bg2); border-bottom: 1px solid var(--border); overflow-x: auto; }
+  .tl-item { flex: 1; min-width: 100px; padding: 10px 14px; border-right: 1px solid var(--border); }
+  .tl-item:last-child { border-right: none; }
+  .tl-exam { font-family: 'IBM Plex Mono', monospace; font-size: 10px; font-weight: 500; letter-spacing: 0.06em; margin-bottom: 2px; }
+  .tl-date { font-size: 13px; font-weight: 500; }
+  .tl-desc { font-size: 11px; color: var(--text3); margin-top: 2px; }
+  .tl-ca1 .tl-exam { color: var(--ca1-c); }
+  .tl-mse1 .tl-exam { color: var(--mse1-c); }
+  .tl-ca2 .tl-exam { color: var(--ca2-c); }
+  .tl-mse2 .tl-exam { color: var(--mse2-c); }
+  .tl-ese .tl-exam { color: var(--red); }
+
+  /* FILTER TABS */
+  .filter-bar { display: flex; gap: 4px; padding: 12px 24px; background: var(--bg); border-bottom: 1px solid var(--border); overflow-x: auto; flex-wrap: nowrap; }
+  .filter-btn { font-family: 'IBM Plex Mono', monospace; font-size: 11px; padding: 5px 12px; border-radius: 6px; border: 1px solid var(--border); background: none; color: var(--text2); cursor: pointer; white-space: nowrap; transition: all 0.15s; }
+  .filter-btn:hover { background: var(--bg3); color: var(--text); }
+  .filter-btn.active { background: var(--bg3); border-color: var(--border2); color: var(--text); }
+  .filter-btn.fca1.active { border-color: var(--ca1-c); color: var(--ca1-c); }
+  .filter-btn.fmse1.active { border-color: var(--mse1-c); color: var(--mse1-c); }
+  .filter-btn.fca2.active { border-color: var(--ca2-c); color: var(--ca2-c); }
+  .filter-btn.fmse2.active { border-color: var(--mse2-c); color: var(--mse2-c); }
+  .filter-btn.fese.active { border-color: var(--red); color: var(--red); }
+
+  /* MAIN */
+  .main { padding: 24px; display: flex; flex-direction: column; gap: 20px; max-width: 1400px; margin: 0 auto; }
+
+  /* SUBJECT CARD */
+  .subject-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+  .subject-header { display: flex; align-items: center; gap: 12px; padding: 14px 18px; cursor: pointer; user-select: none; transition: background 0.15s; }
+  .subject-header:hover { background: var(--bg3); }
+  .subject-code { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--text3); letter-spacing: 0.05em; }
+  .subject-name { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; flex: 1; }
+  .subject-badge { font-size: 10px; padding: 2px 8px; border-radius: 4px; font-family: 'IBM Plex Mono', monospace; letter-spacing: 0.04em; }
+  .badge-core { background: rgba(34,197,94,0.12); color: var(--green); }
+  .badge-elective { background: rgba(245,158,11,0.12); color: var(--amber); }
+  .badge-nc { background: var(--bg4); color: var(--text3); }
+  .badge-skill { background: rgba(59,130,246,0.12); color: var(--blue); }
+  .subject-progress { display: flex; align-items: center; gap: 8px; }
+  .subj-bar { width: 80px; height: 4px; background: var(--bg4); border-radius: 99px; overflow: hidden; }
+  .subj-fill { height: 100%; background: var(--green); border-radius: 99px; transition: width 0.3s; }
+  .subj-pct { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--text3); min-width: 30px; text-align: right; }
+  .chevron { color: var(--text3); font-size: 18px; transition: transform 0.2s; }
+  .subject-card.collapsed .chevron { transform: rotate(-90deg); }
+
+  /* UNITS */
+  .units-container { border-top: 1px solid var(--border); }
+  .subject-card.collapsed .units-container { display: none; }
+
+  .unit-block { border-bottom: 1px solid var(--border); }
+  .unit-block:last-child { border-bottom: none; }
+
+  .unit-header { display: flex; align-items: center; gap: 10px; padding: 10px 18px; background: var(--bg3); }
+  .unit-num { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--text3); min-width: 24px; }
+  .unit-name { font-size: 13px; font-weight: 500; flex: 1; }
+  .exam-tag { font-family: 'IBM Plex Mono', monospace; font-size: 10px; padding: 2px 8px; border-radius: 4px; letter-spacing: 0.04em; }
+  .tag-CA1 { background: var(--ca1-bg); color: var(--ca1-c); }
+  .tag-MSE1 { background: var(--mse1-bg); color: var(--mse1-c); }
+  .tag-CA2 { background: var(--ca2-bg); color: var(--ca2-c); }
+  .tag-MSE2 { background: var(--mse2-bg); color: var(--mse2-c); }
+  .tag-ESE { background: var(--ese-bg); color: var(--ese-c); }
+  .due-date { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--text3); }
+  .due-date.overdue { color: var(--red); }
+  .due-date.soon { color: var(--amber); }
+  .unit-mini-progress { display: flex; align-items: center; gap: 6px; }
+  .unit-bar { width: 50px; height: 3px; background: var(--bg4); border-radius: 99px; overflow: hidden; }
+  .unit-fill { height: 100%; background: var(--green); border-radius: 99px; transition: width 0.3s; }
+  .unit-count { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--text3); }
+
+  /* TOPICS */
+  .topics-list { padding: 8px 18px 12px 18px; display: flex; flex-direction: column; gap: 2px; }
+  .topic-item { display: flex; align-items: center; gap: 10px; padding: 6px 8px; border-radius: 6px; cursor: pointer; transition: background 0.12s; }
+  .topic-item:hover { background: var(--bg3); }
+  .topic-item.done .topic-text { color: var(--text3); text-decoration: line-through; }
+  .topic-item.done .topic-cb { background: var(--green); border-color: var(--green); }
+  .topic-item.done .topic-cb::after { opacity: 1; }
+  .topic-cb { width: 16px; height: 16px; border-radius: 4px; border: 1.5px solid var(--border2); background: var(--bg4); flex-shrink: 0; position: relative; transition: all 0.15s; }
+  .topic-cb::after { content: '✓'; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #000; font-weight: 700; opacity: 0; transition: opacity 0.15s; }
+  .topic-text { font-size: 13px; color: var(--text); flex: 1; }
+
+  /* HIDDEN by filter */
+  .unit-block.hidden { display: none; }
+
+  /* LEGEND */
+  .legend { display: flex; gap: 16px; flex-wrap: wrap; padding: 0 24px 8px; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text2); }
+  .legend-dot { width: 8px; height: 8px; border-radius: 2px; }
+
+  /* STATS ROW */
+  .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; padding: 16px 24px 4px; }
+  .stat-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; }
+  .stat-label { font-size: 11px; color: var(--text3); font-family: 'IBM Plex Mono', monospace; margin-bottom: 4px; }
+  .stat-val { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 700; }
+  .stat-val.green { color: var(--green); }
+  .stat-val.blue { color: var(--blue); }
+  .stat-val.amber { color: var(--amber); }
+  .stat-val.red { color: var(--red); }
+
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--bg4); border-radius: 99px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="header-logo">Sem<span>3</span> Planner</div>
+    <div class="header-meta">ECE · KIET · Aug–Nov 2026</div>
+  </div>
+  <div class="header-right">
+    <div class="global-progress">
+      <span style="font-size:11px;color:var(--text3)">Overall</span>
+      <div class="global-progress-bar"><div class="global-progress-fill" id="global-fill" style="width:0%"></div></div>
+      <span class="global-pct" id="global-pct">0%</span>
+    </div>
+    <button class="reset-btn" onclick="resetAll()">Reset all</button>
+  </div>
+</div>
+
+<div class="timeline">
+  <div class="tl-item tl-ca1">
+    <div class="tl-exam">CA-1</div>
+    <div class="tl-date">~25 Aug</div>
+    <div class="tl-desc">Unit 1 all subjects</div>
+  </div>
+  <div class="tl-item tl-mse1">
+    <div class="tl-exam">MSE-1</div>
+    <div class="tl-date">~20 Sep</div>
+    <div class="tl-desc">Units 1–2</div>
+  </div>
+  <div class="tl-item tl-ca2">
+    <div class="tl-exam">CA-2</div>
+    <div class="tl-date">~20 Oct</div>
+    <div class="tl-desc">Units 3–4</div>
+  </div>
+  <div class="tl-item tl-mse2">
+    <div class="tl-exam">MSE-2</div>
+    <div class="tl-date">~5 Nov</div>
+    <div class="tl-desc">Units 3–4</div>
+  </div>
+  <div class="tl-item tl-ese">
+    <div class="tl-exam">ESE</div>
+    <div class="tl-date">~25 Nov</div>
+    <div class="tl-desc">All 5 units</div>
+  </div>
+</div>
+
+<div class="stats-row" id="stats-row"></div>
+
+<div class="filter-bar">
+  <button class="filter-btn active" data-filter="ALL" onclick="setFilter('ALL',this)">All units</button>
+  <button class="filter-btn fca1" data-filter="CA1" onclick="setFilter('CA1',this)">CA-1 only</button>
+  <button class="filter-btn fmse1" data-filter="MSE1" onclick="setFilter('MSE1',this)">MSE-1 only</button>
+  <button class="filter-btn fca2" data-filter="CA2" onclick="setFilter('CA2',this)">CA-2 only</button>
+  <button class="filter-btn fmse2" data-filter="MSE2" onclick="setFilter('MSE2',this)">MSE-2 only</button>
+  <button class="filter-btn fese" data-filter="ESE" onclick="setFilter('ESE',this)">ESE only</button>
+</div>
+
+<div class="main" id="main"></div>
+
+<script>
+const SUBJECTS = [{"id":"na","code":"EC204L","name":"Network Analysis","credits":2,"badge":"core","units":[{"id":"na_u1","num":1,"name":"Basics of Networks","exam":"CA1","topics":["Introduction to Networks & Circuits","Ohm's Law","KCL & KVL \u2013 concepts & applications","Mesh Analysis","Star-Delta & Delta-Star conversion","Loop analysis with dependent/independent sources","Node analysis with dependent/independent sources","Concept of Super Node","Concept of Super Mesh"]},{"id":"na_u2","num":2,"name":"Network Theorems","exam":"MSE1","topics":["Superposition Theorem","Thevenin's Theorem","Norton's Theorem","Reciprocity Theorem","Maximum Power Transfer Theorem","Tellegen's Theorem","Millman's Theorem"]},{"id":"na_u3","num":3,"name":"Transient & Steady State Analysis","exam":"CA2","topics":["Transient response of RC circuit (step/ramp/impulse/sinusoidal)","Transient response of RL circuit","Transient response of RLC circuit","Laplace Transform for transient analysis","Steady state sinusoidal analysis"]},{"id":"na_u4","num":4,"name":"Two Port Networks","exam":"MSE2","topics":["Z-parameters (impedance)","Y-parameters (admittance)","h-parameters (hybrid)","g-parameters","Transmission (ABCD) parameters","Conversion between parameters","Interconnections of two-port networks"]}]},{"id":"ac","code":"EC205L","name":"Analog Communication","credits":3,"badge":"core","units":[{"id":"ac_u1","num":1,"name":"Probability Theory for Communications","exam":"CA1","topics":["Concept of Probability & Random Variables","Statistical Averages (mean, variance)","Random Process","Power Spectral Density (PSD)","Autocorrelation Function","Gaussian Random Process"]},{"id":"ac_u2","num":2,"name":"Amplitude Modulation","exam":"MSE1","topics":["DSB-C (Double Sideband with Carrier)","DSB-SC (Double Sideband Suppressed Carrier)","Single Sideband Modulation (SSB)","Vestigial Sideband (VSB)","Quadrature Amplitude Modulator (QAM)","AM Modulators & Demodulators","Bandpass AWGN & Noise in AM","SNR improvements in DSB-SC & SSB-SC"]},{"id":"ac_u3","num":3,"name":"Angle Modulation","exam":"CA2","topics":["Angle Modulation concepts","Tone-modulated FM signal","Phase Modulation (PM)","Arbitrary modulated FM signal","FM bandwidth using Bessel's function","Relation between FM & PM","FM Modulator \u2013 Direct method (Varactor Diode)","FM Modulator \u2013 Indirect method","FM Demodulation using PLL","Approximately Compatible SSB Systems","Stereophonic FM Broadcasting","Noise in FM: Pre-emphasis & De-emphasis"]},{"id":"ac_u4","num":4,"name":"Pulse Communication & Digital Baseband","exam":"MSE2","topics":["Pulse Modulation overview","Sampling Theorem & applications","PCM \u2013 generation & demodulation","Delta Modulation (DM)","Pulse Amplitude Modulation (PAM)","Pulse Width Modulation (PWM)","Pulse Position Modulation (PPM)"]},{"id":"ac_u5","num":5,"name":"Applications of Analog Communication","exam":"ESE","topics":["Superheterodyne Receiver","Stereophonic FM transmission","PLL for FM","Wireless microphone systems","Wireless audio/video transmission systems","Analog telemetry systems","Analog remote sensing systems"]}]},{"id":"me","code":"EC301L","name":"Microelectronic Circuits","credits":3,"badge":"core","units":[{"id":"me_u1","num":1,"name":"Semiconductor Physics & PN Junction","exam":"CA1","topics":["Carrier transport \u2013 Drift & Diffusion","Excess carriers \u2013 generation & recombination","Continuity equation","Surface effects & Poisson's equation","Linearly graded & abrupt PN junction","Transient response of PN junction","Forward bias diode current (minority & majority carriers)","Small signal model of PN junction","Reverse bias diode breakdown"]},{"id":"me_u2","num":2,"name":"BJT & Its Model","exam":"MSE1","topics":["BJT device structure & physical operation","Minority carrier profiles in BJT","Current components & current gain","Bias modes of BJT","Non-ideal effects & base width modulation","BJT amplifier biasing","Small-signal model \u2013 CB configuration","Small-signal model \u2013 CE configuration","Small-signal model \u2013 CC configuration"]},{"id":"me_u3","num":3,"name":"MOS Capacitor","exam":"CA2","topics":["Surface charge in MOS capacitor","Surface potential \u2013 Accumulation","Surface potential \u2013 Depletion","Surface potential \u2013 Inversion","C-V characteristics of MIS structure","Low-frequency capacitance","High-frequency capacitance"]},{"id":"me_u4","num":4,"name":"MOSFET & Its Current","exam":"MSE2","topics":["FET types overview","Depletion-type MOSFET \u2013 construction & working","Enhancement-type MOSFET \u2013 construction & working","Transfer characteristic of MOSFET","Drain characteristic of MOSFET","Basic physics of MOSFET fabrication"]},{"id":"me_u5","num":5,"name":"MOSFET Model","exam":"ESE","topics":["Gradual channel approximation","Constant mobility model","Threshold voltage derivation","Onset of pinch-off & current saturation","Sub-threshold characteristics","Substrate bias effects","Temperature effects on MOSFET"]}]},{"id":"db","code":"IT301L","name":"Database Systems","credits":3,"badge":"core","units":[{"id":"db_u1","num":1,"name":"Intro to DB & ER Model","exam":"CA1","topics":["Database vs File System","Database system concept & architecture","Data model, schema & instances","Data independence & its types","Overall database structure","ER Model concepts & notation","Mapping constraints & key attributes","Generalisation & Aggregation in ER","Reduction of ER diagram to tables"]},{"id":"db_u2","num":2,"name":"Relational Model & SQL","exam":"MSE1","topics":["Relational data model concepts & types of keys","Entity integrity & referential integrity constraints","Relational Algebra \u2013 SELECT & PROJECT","Relational Algebra \u2013 CROSS, JOIN & DIVISION","Introduction to SQL & SQL data types","CREATE, INSERT, DELETE, UPDATE statements","GROUP BY, HAVING, ORDER BY clauses","Subqueries & aggregate functions","JOINs, UNION, INTERSECTION, MINUS","Views in SQL"]},{"id":"db_u3","num":3,"name":"DB Design & Normalisation","exam":"CA2","topics":["Functional dependencies & inference rules","Closure of attributes & FD equivalence","Minimal cover","1NF, 2NF, 3NF","Boyce-Codd Normal Form (BCNF)","Lossless join decomposition","Dependency preservation","Multi-valued dependencies & 4NF","Join dependencies & 5NF"]},{"id":"db_u4","num":4,"name":"Transaction Processing & Concurrency Control","exam":"MSE2","topics":["Transaction states & ACID properties","Transaction scheduling & serializability","Conflict & view serializability","Locking techniques for concurrency control","Two-phase locking (2PL)","Timestamp protocols for concurrency control"]},{"id":"db_u5","num":5,"name":"Recovery Techniques & PL/SQL","exam":"ESE","topics":["Recovery concepts & recoverability","Log-based recovery","Checkpoints & shadow paging","ARIES recovery algorithm","Deadlock handling","PL/SQL \u2013 features & syntax","Cursors in PL/SQL","Stored procedures & stored functions","Database triggers & indexing"]}]},{"id":"ss","code":"EC203B","name":"Signals & Systems","credits":3,"badge":"core","units":[{"id":"ss_u1","num":1,"name":"Basics of Signals & Systems","exam":"CA1","topics":["Basic elementary signals (step, impulse, ramp, exponential, sine)","Operations on signals (amplitude scaling, time scaling, time shifting)","Classification of signals","Systems in everyday life & interconnections","Classification of systems","Stability of systems","Convolution"]},{"id":"ss_u2","num":2,"name":"CTFT & DTFT","exam":"MSE1","topics":["Continuous Time Fourier Transform (CTFT) introduction","Properties of CTFT","Inverse CTFT & numerical problems","Discrete Time Fourier Transform (DTFT) introduction","Properties of DTFT","Inverse DTFT & numerical problems"]},{"id":"ss_u3","num":3,"name":"Laplace Transform","exam":"CA2","topics":["Introduction to Laplace Transform","Region of Convergence (ROC)","Properties of Laplace Transform","Inverse Laplace Transform (partial fraction method)","System representation via differential equations"]},{"id":"ss_u4","num":4,"name":"Z Transform","exam":"MSE2","topics":["Introduction to Z Transform","Region of Convergence (ROC) & its properties","Properties of Z Transform","Inverse Z Transform \u2013 long division method","Inverse Z Transform \u2013 partial fraction method","System representation via difference equations"]},{"id":"ss_u5","num":5,"name":"Sampling Theorem","exam":"ESE","topics":["Introduction to sampling","Sampling theorem \u2013 construction & reconstruction","Spectra of sampled signals","Nyquist criteria","Aliasing & its effects"]}]},{"id":"ai","code":"AI101B","name":"Introduction to AI","credits":3,"badge":"core","units":[{"id":"ai_u1","num":1,"name":"Introduction to AI","exam":"CA1","topics":["Motivation & role of Artificial Intelligence","AI from Turing Test to Humanoids","AI concept, terminology & application areas","Agents & Environments","Types of AI (search/rule/learning based)","Adversarial search \u2013 Minimax algorithm","Alpha-beta pruning","Constraint Satisfaction Problem (CSP)","Backtracking search & local search"]},{"id":"ai_u2","num":2,"name":"Understanding Data","exam":"MSE1","topics":["History of Data","Data storage & importance","Data acquisition","Stages of data processing","Data visualisation"]},{"id":"ai_u3","num":3,"name":"Domains of AI","exam":"CA2","topics":["Overview of ML: Supervised Learning","Overview of ML: Unsupervised Learning","Overview of NLP: Speech recognition","Overview of NLP: Natural language understanding & generation","Overview of NLP: Machine Translation","Overview of Computer Vision: image formation & classification","Overview of Computer Vision: image detection","Overview of Artificial Neural Networks (ANN)"]},{"id":"ai_u4","num":4,"name":"Uncertainty & Emerging Technologies","exam":"MSE2","topics":["Conditional independence in AI","Bayes' rule & naive Bayes model","Utility function & decision networks","Reinforcement Learning \u2013 active & passive learning","Model-based learning","Generative Adversarial Networks (GANs)","Chatbots & Generative AI (ChatGPT overview)","Ethics of AI & future of AI"]}]},{"id":"rob","code":"EC235E","name":"Kinematics of Robotic Systems","credits":4,"badge":"elective","units":[{"id":"rob_u1","num":1,"name":"Introduction to Robotic Systems","exam":"CA1","topics":["Types of Robots & Robot Components","Manipulator & Reference Frames","Degrees of Freedom (DOF)","Joints of a Robot","Robot Configurations","End Effectors","COBOTs \u2013 Evolution & Levels of Collaboration","Collaborative Modes & Bio-Mechanical Limits","ISO Standards (ISO 10218:1,2)","Risk Assessment for COBOTs"]},{"id":"rob_u2","num":2,"name":"Kinematic Transformations","exam":"MSE1","topics":["Forward Kinematics & workspace","Inverse Kinematics","Coordinate Frames & Homogeneous Transformation","Rotation transformation","Translation transformation","Composition of homogeneous transformations","Differential Motion","Velocity of a Frame & Velocity of a Point","Transforming differential changes between coordinate frames"]},{"id":"rob_u3","num":3,"name":"Kinematic Model for Robot Manipulator","exam":"CA2","topics":["Denavit-Hartenberg (DH) Procedure","DH Coordinate Frames","3-DOF Manipulator","6-DOF Manipulator","4-Axis SCARA Robot Manipulator","Jacobian","Dynamics \u2013 Lagrange-Euler approach","Dynamics \u2013 Newton-Euler approach","Multiple DOF dynamics","Stability \u2013 linear & non-linear systems","Manipulator Control"]},{"id":"rob_u4","num":4,"name":"Trajectory Planning","exam":"MSE2","topics":["Path vs Trajectory","Cartesian Trajectory","Joint Trajectory","Cubic Polynomial Trajectories","Quintic Polynomial Trajectory","Biped Robot Basics & Flat Foot Biped Model","Sagittal, Frontal & Transverse Planes","Single Support & Double Support Phase","Zero Moment Point (ZMP)","DH Procedure for Biped Robot","Swing leg trajectories & Upper Body Motion"]},{"id":"rob_u5","num":5,"name":"AI-Integrated Robotic Systems","exam":"ESE","topics":["Role of AI in modern robotics","Traditional vs Intelligent robots","Sensor data processing for perception","Computer vision using OpenCV","Object detection (YOLO)","ANN for trajectory generation","Neural network-based control for manipulators","AI-based Inverse Kinematics (learning-based IK)","Optimization-based trajectory planning","Reinforcement Learning for robotics (basic idea)","Obstacle-aware trajectory generation"]}]},{"id":"ci","code":"HS109L","name":"Constitution of India","credits":0,"badge":"nc","units":[{"id":"ci_u1","num":1,"name":"Basic Info about Indian Constitution","exam":"CA1","topics":["Constitutionalism & historical background (1935 & 1947 Acts)","Salient features of Indian Constitution","Preamble of the Constitution","Fundamental Rights & Fundamental Duties","Directive Principles of State Policy","Parliamentary & Federal System","Centre-State relations","Emergency Provisions & Local Self Government"]},{"id":"ci_u2","num":2,"name":"Union & State Executive","exam":"MSE1","topics":["Powers of Indian Parliament (Lok Sabha & Rajya Sabha)","Powers & functions of the President","Powers & functions of the Prime Minister","Supreme Court \u2013 independence, judicial review, PIL","Lok Pal & Lok Ayukta (Act 2013)","State executives \u2013 Governor & Chief Minister","State Legislature, High Court & Subordinate Courts"]},{"id":"ci_u3","num":3,"name":"Legal System","exam":"CA2","topics":["Sources of law & court structure in India","Arbitration as alternative dispute resolution","Contract law & Tort","Law at workplace"]},{"id":"ci_u4","num":4,"name":"Election, Emergency & Amendment","exam":"ESE","topics":["Election Commission \u2013 composition, powers & functions","Electoral process","Types of Emergency \u2013 grounds, procedure & effects","Amendment procedure & limitations"]}]},{"id":"apt","code":"HS110L","name":"Aptitude-1","credits":1,"badge":"skill","units":[{"id":"apt_u1","num":1,"name":"Series, Coding & Decoding","exam":"CA1","topics":["Number series","Letter series","Analogies","Coding & Decoding"]},{"id":"apt_u2","num":2,"name":"Data Arrangement","exam":"MSE1","topics":["Ranking & Order","Direction Sense","Linear seating arrangement","Circular seating arrangement"]},{"id":"apt_u3","num":3,"name":"Blood Relations & Puzzles","exam":"CA2","topics":["Basic blood relationship concepts","Conversation-based blood relationships","Family tree problems","Coded relationships & puzzles"]},{"id":"apt_u4","num":4,"name":"Critical & Non-Verbal Reasoning","exam":"MSE2","topics":["Statement & arguments / Course of action","Classification & grouping of images","Figure series","Mirror & water image","Paper cutting & folding","Embedded figures"]}]}];
+
+// Due dates per exam
+const DUE = { CA1:'2026-08-25', MSE1:'2026-09-20', CA2:'2026-10-20', MSE2:'2026-11-05', ESE:'2026-11-25' };
+const EXAM_LABELS = { CA1:'CA-1 · 25 Aug', MSE1:'MSE-1 · 20 Sep', CA2:'CA-2 · 20 Oct', MSE2:'MSE-2 · 5 Nov', ESE:'ESE · 25 Nov' };
+
+// Storage
+const SK = 'sem3_planner_v3';
+let state = {};
+try { state = JSON.parse(localStorage.getItem(SK) || '{}'); } catch(e) {}
+
+function save() { try { localStorage.setItem(SK, JSON.stringify(state)); } catch(e) {} }
+
+function topicKey(subjId, unitId, ti) { return `${subjId}__${unitId}__${ti}`; }
+
+function isDone(subjId, unitId, ti) { return !!state[topicKey(subjId, unitId, ti)]; }
+
+function toggle(subjId, unitId, ti) {
+  const k = topicKey(subjId, unitId, ti);
+  state[k] = !state[k];
+  save();
+  refreshAll();
+}
+
+function resetAll() {
+  if (!confirm('Reset all progress? This cannot be undone.')) return;
+  state = {};
+  save();
+  refreshAll();
+}
+
+// Date helpers
+function daysDiff(dateStr) {
+  const now = new Date(); now.setHours(0,0,0,0);
+  const d = new Date(dateStr); d.setHours(0,0,0,0);
+  return Math.round((d - now) / 86400000);
+}
+
+function dueDateClass(exam) {
+  const d = daysDiff(DUE[exam]);
+  if (d < 0) return 'overdue';
+  if (d <= 7) return 'soon';
+  return '';
+}
+
+// Active filter
+let activeFilter = 'ALL';
+function setFilter(f, btn) {
+  activeFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.unit-block').forEach(ub => {
+    const exam = ub.dataset.exam;
+    ub.classList.toggle('hidden', activeFilter !== 'ALL' && exam !== activeFilter);
+  });
+}
+
+// Stats
+function updateStats() {
+  let total = 0, done = 0;
+  const byExam = { CA1:[0,0], MSE1:[0,0], CA2:[0,0], MSE2:[0,0], ESE:[0,0] };
+  SUBJECTS.forEach(s => s.units.forEach(u => u.topics.forEach((t,i) => {
+    total++;
+    byExam[u.exam][0]++;
+    if (isDone(s.id, u.id, i)) { done++; byExam[u.exam][1]++; }
+  })));
+
+  const pct = total ? Math.round(done/total*100) : 0;
+  document.getElementById('global-fill').style.width = pct+'%';
+  document.getElementById('global-pct').textContent = pct+'%';
+
+  const stats = document.getElementById('stats-row');
+  stats.innerHTML = `
+    <div class="stat-card"><div class="stat-label">TOPICS DONE</div><div class="stat-val green">${done}<span style="font-size:14px;color:var(--text3)">/${total}</span></div></div>
+    <div class="stat-card" style="border-top:2px solid var(--ca1-c)"><div class="stat-label">CA-1 TOPICS</div><div class="stat-val blue">${byExam.CA1[1]}<span style="font-size:14px;color:var(--text3)">/${byExam.CA1[0]}</span></div></div>
+    <div class="stat-card" style="border-top:2px solid var(--mse1-c)"><div class="stat-label">MSE-1 TOPICS</div><div class="stat-val" style="color:var(--purple)">${byExam.MSE1[1]}<span style="font-size:14px;color:var(--text3)">/${byExam.MSE1[0]}</span></div></div>
+    <div class="stat-card" style="border-top:2px solid var(--ca2-c)"><div class="stat-label">CA-2 TOPICS</div><div class="stat-val amber">${byExam.CA2[1]}<span style="font-size:14px;color:var(--text3)">/${byExam.CA2[0]}</span></div></div>
+    <div class="stat-card" style="border-top:2px solid var(--mse2-c)"><div class="stat-label">MSE-2 TOPICS</div><div class="stat-val amber">${byExam.MSE2[1]}<span style="font-size:14px;color:var(--text3)">/${byExam.MSE2[0]}</span></div></div>
+    <div class="stat-card" style="border-top:2px solid var(--red)"><div class="stat-label">ESE TOPICS</div><div class="stat-val red">${byExam.ESE[1]}<span style="font-size:14px;color:var(--text3)">/${byExam.ESE[0]}</span></div></div>
+  `;
+}
+
+function refreshAll() {
+  updateStats();
+  // update all subject progress bars + unit counts
+  SUBJECTS.forEach(s => {
+    let sDone = 0, sTotal = 0;
+    s.units.forEach(u => {
+      let uDone = 0;
+      u.topics.forEach((t,i) => {
+        sTotal++;
+        if (isDone(s.id, u.id, i)) { sDone++; uDone++; }
+      });
+      // update unit count
+      const countEl = document.getElementById('count_'+u.id);
+      if (countEl) countEl.textContent = uDone+'/'+u.topics.length;
+      const uFill = document.getElementById('ufill_'+u.id);
+      if (uFill) uFill.style.width = (u.topics.length ? Math.round(uDone/u.topics.length*100) : 0)+'%';
+    });
+    const pct = sTotal ? Math.round(sDone/sTotal*100) : 0;
+    const fill = document.getElementById('sfill_'+s.id);
+    if (fill) fill.style.width = pct+'%';
+    const pctEl = document.getElementById('spct_'+s.id);
+    if (pctEl) pctEl.textContent = pct+'%';
+
+    // topic checkboxes
+    s.units.forEach(u => u.topics.forEach((t,i) => {
+      const item = document.getElementById('ti_'+s.id+'_'+u.id+'_'+i);
+      if (!item) return;
+      const done = isDone(s.id, u.id, i);
+      item.classList.toggle('done', done);
+      const cb = item.querySelector('.topic-cb');
+      if (cb) cb.style.background = done ? 'var(--green)' : '';
+    }));
+  });
+}
+
+// Build DOM
+function buildUI() {
+  const main = document.getElementById('main');
+  main.innerHTML = '';
+
+  SUBJECTS.forEach(s => {
+    const card = document.createElement('div');
+    card.className = 'subject-card';
+    card.id = 'card_'+s.id;
+
+    const unitsHtml = s.units.map(u => {
+      const dClass = dueDateClass(u.exam);
+      const dLabel = EXAM_LABELS[u.exam];
+      const topicsHtml = u.topics.map((t,i) => `
+        <div class="topic-item" id="ti_${s.id}_${u.id}_${i}" onclick="toggle('${s.id}','${u.id}',${i})">
+          <div class="topic-cb"></div>
+          <span class="topic-text">${t}</span>
+        </div>
+      `).join('');
+
+      return `
+        <div class="unit-block" data-exam="${u.exam}">
+          <div class="unit-header">
+            <span class="unit-num">U${u.num}</span>
+            <span class="unit-name">${u.name}</span>
+            <span class="exam-tag tag-${u.exam}">${u.exam}</span>
+            <span class="due-date ${dClass}">${dLabel}</span>
+            <div class="unit-mini-progress">
+              <div class="unit-bar"><div class="unit-fill" id="ufill_${u.id}" style="width:0%"></div></div>
+              <span class="unit-count" id="count_${u.id}">0/${u.topics.length}</span>
+            </div>
+          </div>
+          <div class="topics-list">${topicsHtml}</div>
+        </div>
+      `;
+    }).join('');
+
+    card.innerHTML = `
+      <div class="subject-header" onclick="toggleCard('${s.id}')">
+        <div>
+          <div class="subject-code">${s.code}</div>
+          <div class="subject-name">${s.name}</div>
+        </div>
+        <span class="subject-badge badge-${s.badge}">${s.badge === 'core' ? 'Core' : s.badge === 'elective' ? 'PE-I' : s.badge === 'nc' ? 'Non-credit' : 'Skill'}</span>
+        <div class="subject-progress">
+          <div class="subj-bar"><div class="subj-fill" id="sfill_${s.id}" style="width:0%"></div></div>
+          <span class="subj-pct" id="spct_${s.id}">0%</span>
+        </div>
+        <span class="chevron">›</span>
+      </div>
+      <div class="units-container">${unitsHtml}</div>
+    `;
+
+    main.appendChild(card);
+  });
+
+  refreshAll();
+  // apply current filter
+  if (activeFilter !== 'ALL') {
+    document.querySelectorAll('.unit-block').forEach(ub => {
+      ub.classList.toggle('hidden', ub.dataset.exam !== activeFilter);
+    });
+  }
+}
+
+function toggleCard(id) {
+  const card = document.getElementById('card_'+id);
+  card.classList.toggle('collapsed');
+}
+
+buildUI();
+</script>
+</body>
+</html>
