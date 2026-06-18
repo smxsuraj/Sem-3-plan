@@ -166,6 +166,7 @@
     <div class="header-meta">ECE · KIET · Aug–Nov 2026</div>
   </div>
   <div class="header-right">
+    <span id="sync-ind" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text3);min-width:80px;text-align:right"></span>
     <div class="global-progress">
       <span style="font-size:11px;color:var(--text3)">Overall</span>
       <div class="global-progress-bar"><div class="global-progress-fill" id="global-fill" style="width:0%"></div></div>
@@ -223,12 +224,51 @@ const SUBJECTS = [{"id":"na","code":"EC204L","name":"Network Analysis","credits"
 const DUE = { CA1:'2026-08-25', MSE1:'2026-09-20', CA2:'2026-10-20', MSE2:'2026-11-05', ESE:'2026-11-25' };
 const EXAM_LABELS = { CA1:'CA-1 · 25 Aug', MSE1:'MSE-1 · 20 Sep', CA2:'CA-2 · 20 Oct', MSE2:'MSE-2 · 5 Nov', ESE:'ESE · 25 Nov' };
 
-// Storage
+// Storage — window.storage for cross-device sync, localStorage as instant fallback
 const SK = 'sem3_planner_v3';
 let state = {};
+let saveTimer = null;
+
+// Load from localStorage first (instant), then sync from window.storage
 try { state = JSON.parse(localStorage.getItem(SK) || '{}'); } catch(e) {}
 
-function save() { try { localStorage.setItem(SK, JSON.stringify(state)); } catch(e) {} }
+async function loadFromCloud() {
+  try {
+    const res = await window.storage.get(SK);
+    if (res && res.value) {
+      const cloud = JSON.parse(res.value);
+      // merge: cloud wins for any key set to true
+      let changed = false;
+      Object.keys(cloud).forEach(k => { if (cloud[k] && !state[k]) { state[k] = true; changed = true; } });
+      if (changed) { localStorage.setItem(SK, JSON.stringify(state)); refreshAll(); }
+    }
+  } catch(e) {}
+}
+
+function save() {
+  localStorage.setItem(SK, JSON.stringify(state));
+  const ind = document.getElementById('sync-ind');
+  if (ind) { ind.textContent = '↑ saving…'; ind.style.color = 'var(--amber)'; }
+  // debounce cloud writes to avoid hammering the API
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(async () => {
+    try {
+      await window.storage.set(SK, JSON.stringify(state));
+      if (ind) { ind.textContent = '✓ synced'; ind.style.color = 'var(--green)'; setTimeout(()=>{ if(ind) ind.textContent=''; },2000); }
+    } catch(e) {
+      if (ind) { ind.textContent = '⚠ local only'; ind.style.color = 'var(--text3)'; }
+    }
+  }, 600);
+}
+
+async function resetAll() {
+  if (!confirm('Reset all progress? This cannot be undone.')) return;
+  state = {};
+  localStorage.removeItem(SK);
+  try { await window.storage.delete(SK); } catch(e) {}
+  refreshAll();
+  return;
+}
 
 function topicKey(subjId, unitId, ti) { return `${subjId}__${unitId}__${ti}`; }
 
@@ -237,13 +277,6 @@ function isDone(subjId, unitId, ti) { return !!state[topicKey(subjId, unitId, ti
 function toggle(subjId, unitId, ti) {
   const k = topicKey(subjId, unitId, ti);
   state[k] = !state[k];
-  save();
-  refreshAll();
-}
-
-function resetAll() {
-  if (!confirm('Reset all progress? This cannot be undone.')) return;
-  state = {};
   save();
   refreshAll();
 }
@@ -405,6 +438,8 @@ function toggleCard(id) {
 }
 
 buildUI();
+// Load cloud data after UI is ready
+loadFromCloud();
 </script>
 </body>
 </html>
