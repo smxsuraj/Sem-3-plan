@@ -160,6 +160,14 @@
 </head>
 <body>
 
+<div id="setup-banner" style="display:none;background:#1a1400;border-bottom:1px solid var(--amber);padding:10px 24px;font-size:12px;font-family:'IBM Plex Mono',monospace;color:var(--amber);line-height:1.7">
+  <strong>⚙ One-time setup for cross-device sync:</strong>
+  &nbsp;1. Go to <a href="https://jsonbin.io" target="_blank" style="color:var(--amber)">jsonbin.io</a> → sign up free → Create Bin (paste <code>{}</code>) → Save
+  &nbsp;·&nbsp;2. Copy the Bin ID from the URL &amp; your Master Key from Account → API Keys
+  &nbsp;·&nbsp;3. Paste both into the <code>JSONBIN_BIN_ID</code> and <code>JSONBIN_API_KEY</code> constants at the top of the JS &amp; redeploy.
+  &nbsp;<em style="color:var(--text3)">(Until then, progress saves locally on this device only.)</em>
+</div>
+
 <div class="header">
   <div>
     <div class="header-logo">Sem<span>3</span> Planner</div>
@@ -224,50 +232,87 @@ const SUBJECTS = [{"id":"na","code":"EC204L","name":"Network Analysis","credits"
 const DUE = { CA1:'2026-08-25', MSE1:'2026-09-20', CA2:'2026-10-20', MSE2:'2026-11-05', ESE:'2026-11-25' };
 const EXAM_LABELS = { CA1:'CA-1 · 25 Aug', MSE1:'MSE-1 · 20 Sep', CA2:'CA-2 · 20 Oct', MSE2:'MSE-2 · 5 Nov', ESE:'ESE · 25 Nov' };
 
-// Storage — window.storage for cross-device sync, localStorage as instant fallback
-const SK = 'sem3_planner_v3';
+// ─── STORAGE CONFIG ──────────────────────────────────────────────────────────
+// JSONBin.io for cross-device sync. Steps to set up (free, 1 minute):
+//  1. Go to https://jsonbin.io  →  Sign up free
+//  2. Click "Create Bin"  →  paste in {}  →  Save
+//  3. Copy the Bin ID from the URL (looks like: 6849abc123...)
+//  4. Go to Account → API Keys → copy your Master Key
+//  5. Paste both below and re-deploy to Vercel
+const JSONBIN_BIN_ID  = 'PASTE_YOUR_BIN_ID_HERE';
+const JSONBIN_API_KEY = 'PASTE_YOUR_API_KEY_HERE';
+const JSONBIN_URL     = `https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`;
+// ─────────────────────────────────────────────────────────────────────────────
+
+const SK = 'sem3_planner_v4';
 let state = {};
 let saveTimer = null;
+const configured = JSONBIN_BIN_ID !== 'PASTE_YOUR_BIN_ID_HERE';
 
-// Load from localStorage first (instant), then sync from window.storage
+// Load from localStorage immediately (instant render)
 try { state = JSON.parse(localStorage.getItem(SK) || '{}'); } catch(e) {}
 
+function setInd(text, color) {
+  const el = document.getElementById('sync-ind');
+  if (el) { el.textContent = text; el.style.color = color; }
+}
+
 async function loadFromCloud() {
+  if (!configured) { setInd('⚙ setup needed', 'var(--text3)'); return; }
+  setInd('↓ loading…', 'var(--text3)');
   try {
-    const res = await window.storage.get(SK);
-    if (res && res.value) {
-      const cloud = JSON.parse(res.value);
-      // merge: cloud wins for any key set to true
-      let changed = false;
-      Object.keys(cloud).forEach(k => { if (cloud[k] && !state[k]) { state[k] = true; changed = true; } });
-      if (changed) { localStorage.setItem(SK, JSON.stringify(state)); refreshAll(); }
-    }
-  } catch(e) {}
+    const r = await fetch(JSONBIN_URL + '/latest', {
+      headers: { 'X-Master-Key': JSONBIN_API_KEY }
+    });
+    if (!r.ok) throw new Error(r.status);
+    const json = await r.json();
+    const cloud = json.record || {};
+    // merge: cloud wins for keys set to true
+    let changed = false;
+    Object.keys(cloud).forEach(k => { if (cloud[k] && !state[k]) { state[k] = true; changed = true; } });
+    if (changed) { localStorage.setItem(SK, JSON.stringify(state)); refreshAll(); }
+    setInd('✓ synced', 'var(--green)');
+    setTimeout(() => setInd('', ''), 2000);
+  } catch(e) {
+    setInd('⚠ local only', 'var(--text3)');
+  }
 }
 
 function save() {
   localStorage.setItem(SK, JSON.stringify(state));
-  const ind = document.getElementById('sync-ind');
-  if (ind) { ind.textContent = '↑ saving…'; ind.style.color = 'var(--amber)'; }
-  // debounce cloud writes to avoid hammering the API
+  if (!configured) return;
+  setInd('↑ saving…', 'var(--amber)');
   clearTimeout(saveTimer);
   saveTimer = setTimeout(async () => {
     try {
-      await window.storage.set(SK, JSON.stringify(state));
-      if (ind) { ind.textContent = '✓ synced'; ind.style.color = 'var(--green)'; setTimeout(()=>{ if(ind) ind.textContent=''; },2000); }
+      const r = await fetch(JSONBIN_URL, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'X-Master-Key': JSONBIN_API_KEY },
+        body: JSON.stringify(state)
+      });
+      if (!r.ok) throw new Error(r.status);
+      setInd('✓ synced', 'var(--green)');
+      setTimeout(() => setInd('', ''), 2000);
     } catch(e) {
-      if (ind) { ind.textContent = '⚠ local only'; ind.style.color = 'var(--text3)'; }
+      setInd('⚠ local only', 'var(--text3)');
     }
-  }, 600);
+  }, 800);
 }
 
 async function resetAll() {
   if (!confirm('Reset all progress? This cannot be undone.')) return;
   state = {};
   localStorage.removeItem(SK);
-  try { await window.storage.delete(SK); } catch(e) {}
+  if (configured) {
+    try {
+      await fetch(JSONBIN_URL, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'X-Master-Key': JSONBIN_API_KEY },
+        body: JSON.stringify({})
+      });
+    } catch(e) {}
+  }
   refreshAll();
-  return;
 }
 
 function topicKey(subjId, unitId, ti) { return `${subjId}__${unitId}__${ti}`; }
@@ -438,7 +483,7 @@ function toggleCard(id) {
 }
 
 buildUI();
-// Load cloud data after UI is ready
+if (!configured) document.getElementById('setup-banner').style.display = 'block';
 loadFromCloud();
 </script>
 </body>
